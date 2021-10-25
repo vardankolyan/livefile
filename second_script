@@ -1,0 +1,186 @@
+#!/bin/bash
+#read -p "Enter access key: " access_key
+#read -p "Enter secret key: " secret_key
+#read -p "Enter Instance region: " ec2_region
+#read -p "Enter username" user
+#read -p "Enter groupname" group
+#read -p "Enter user permission apn: " arn:aws:iam::664816002420:group/s3-admin
+#read -p "Enter bucket name: " bucket_name
+
+
+ec2_region=ohio
+s3_region=us-east-1
+user=automation
+group=s3-admin
+admin_perm=arn:aws:iam::664816002420:group/s3-admin
+path=/home/ubuntu/acatest/second_script/ab
+bucket_name=second-scripst-321
+#install&configure aws
+#acatest
+sudo apt-get -qq update || { echo 'apt-get update failed' ; exit 1; } 
+sudo apt-get install -qq awscli || { echo 'apt-get install failed'; exit 1; }
+aws configure set aws_access_key_id $access_key
+aws configure set aws_secret_access_key $secret_key
+aws configure set region "$ec2_region"
+#create IAM group if doesn't exist
+tmp=$(aws iam get-group --group-name $group | jq -r '.Group.GroupName')
+if [[ $tmp == $group ]]	
+	then echo "group $group exists"
+else 
+	echo "group $user doesn't exist. creating..."
+	aws iam create-group --user-name $group
+	tmp=$(aws iam get-group --group-name $group | jq -r '.Group.GroupName')
+	if [[ $tmp == $group ]]
+		then
+		echo "$group is created"
+	else 
+		echo "something went wrong. Group $group can't be created"
+	fi
+	exit 1
+fi
+#create IAM user if doesn't exist
+tmp=$(aws iam get-user --user-name $user | jq -r '.User.UserName')
+if [[ $tmp == $user ]]	
+	then 
+	echo "user $user exists"
+else 
+	echo "user $user doesn't exist. Creating..."
+	aws iam create-user --user-name $user --permissions-boundary $admin_perm
+	tmp=$(aws iam get-user --user-name $user | jq -r '.User.UserName')
+	if [[ $tmp == $user ]]
+		then
+		echo "$user is created"
+	else 
+		echo "something went wrong. User $user can't be created"
+	exit 1
+	fi
+fi
+#Asign User to Group
+tmp=$(aws iam list-groups-for-user --user-name $user | jq -r '.Groups[].GroupName')
+if [[ $tmp == $group ]]
+	then 
+	echo "the user $user is already assigned to the $group"
+else  
+	aws iam add-user-to-group --user-name $user
+	tmp=$(aws iam list-groups-for-user --user-name $user | jq -r '.Groups[].GroupName')
+	if [[ $tmp == $group ]]
+	then
+		echo "the user $user has been successfully attached to the group $group"
+	else 
+		echo "something went wrong. User $user can't be attached to the group $group"
+	exit 1
+	fi
+fi
+#create files
+for i in {1..10}
+do
+	if [[ -f $path/a$i ]] 
+	then 
+		echo "File a$i exist"
+	else 
+		sudo touch $path/a$i
+		if [[ -f $path/a$i ]]
+		then 
+			echo "file a$i is created"
+		else 
+			echo "something went wrong. file a$i can't be created"
+		exit 1
+		fi
+	fi
+
+	if [[ -f $path/b$i ]]
+	then 
+		echo "File b$i exist"
+	else 
+		sudo touch $path/b$i
+		if [[ -f $path/b$i ]]
+		then 
+			echo "file b$i is created"
+		else 
+			echo "something went wrong. file b$i can't be created"
+		exit 1
+		fi
+	fi
+done
+
+#create bucket
+
+if [[ -z `aws s3api head-bucket --bucket $bucket_name --region "us-east-1"` ]]
+then
+	echo "bucket $bucket_name exist"
+else 
+	aws s3api create-bucket --bucket $bucket_name --region "us-east-1"
+	if [[ -z `aws s3api head-bucket --bucket $bucket_name --region "us-east-1"` ]]
+	then
+		echo "$bucket_name bucket has been created"
+	else
+		echo "bucket $bucket_name can't be created"
+	exit 1
+	fi
+fi
+
+#copy files to bucket
+for i in {1..10}
+do
+	a_exists=$(aws s3api head-object --bucket $bucket_name --key a$i --region "us-east-1" | grep -o "Metadata")
+	b_exists=$(aws s3api head-object --bucket $bucket_name --key b$i --region "us-east-1" | grep -o "Metadata")
+	if [[ $a_exists = Metadata ]]
+	then 
+		echo "a$i exist in the bucket. No need to upload. Local file is being deleted..."
+		sudo rm -f $path/a$i
+		if [[ -z `ls -l | grep a$i` ]]
+		then
+			echo "file a$i is deleted"
+		else
+			echo "file a$i is not deleted"
+		fi
+	else 
+		echo "a$i doesn't exist. Uploading..."
+		aws s3 cp $path/a$i s3://$bucket_name --region "us-east-1"
+		a1_exists=$(aws s3api head-object --bucket $bucket_name --key a$i --region "us-east-1" | grep -o "Metadata")
+		if [[ $a1_exists = Metadata ]]
+		then
+			echo "file a$i has been sucessfully copied"
+			sudo rm -f $path/a$i
+			if [[ -z `ls -l | grep a$i` ]]
+			then
+				echo "file a$i has been uploaded, so it is being deleted from local store"
+			else 
+				echo "file a$i has been uploaded but can't be deleted from local store"
+			fi
+		else 
+			echo "file a$i can't be copied"
+		fi
+	fi
+	
+	if [[ $b_exists = Metadata ]]
+	then 
+		echo "b$i exist in the bucket. No need to upload"
+		sudo rm -f $path/b$i
+		if [[ -z `ls -l | grep a$i` ]]
+		then
+			echo "file a$i is deleted"
+		else
+			echo "file a$i is not deleted"
+		fi
+	else 
+		echo "b$i doesn't exist. Uploading..."
+		aws s3 cp $path/b$i s3://$bucket_name --region "us-east-1"
+		b1_exists=$(aws s3api head-object --bucket $bucket_name --key b$i --region "us-east-1" | grep -o "Metadata")
+		if [[ $b1_exists = Metadata ]];
+		then
+			echo "file b$i has been sucessfully copied"
+			sudo rm -f $path/b$i
+			if [[ -z `ls -l | grep b$i` ]]
+			then
+				echo "file b$i has been uploaded, so it is being deleted from local store"
+			else 
+				echo "file b$i has been uploaded but can't be deleted from local store"
+			fi
+		else 
+			echo "file b$i can't be copied"
+		fi
+	fi
+
+done
+exit 0
