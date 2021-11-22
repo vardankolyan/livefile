@@ -1,0 +1,87 @@
+{
+  "CallerReference": "www_dist",
+  "Aliases": {
+    "Quantity": 2,
+    "Items": [
+        "vardan.acadevopscourse.xyz",
+	 "www.vardan.acadevopscourse.xyz"
+    ]
+  },
+  "DefaultRootObject": "index.html",
+  "Origins": {
+    "Quantity": 1,
+    "Items": [
+      {
+        "Id": "vardan.acadevopscourse.xyz.s3.amazonaws.com",
+        "DomainName": "vardan.acadevopscourse.xyz.s3.amazonaws.com",
+        "S3OriginConfig": {
+          "OriginAccessIdentity": ""
+        }
+      }
+    ]
+  },
+  "DefaultCacheBehavior": {
+    "TargetOriginId": "vardan.acadevopscourse.xyz.s3.amazonaws.com",
+    "ForwardedValues": {
+      "QueryString": true,
+      "Cookies": {
+        "Forward": "none"
+      }
+    },
+
+    "ViewerProtocolPolicy": "redirect-to-https",
+    "TrustedSigners": {
+      "Enabled": false,
+      "Quantity": 0
+    },
+
+    "AllowedMethods": {
+        "Quantity": 2,
+        "Items": [
+            "HEAD",
+            "GET"
+        ],
+        "CachedMethods": {
+            "Quantity": 2,
+            "Items": [
+                "HEAD",
+                "GET"
+            ]
+        }
+    },
+    "ViewerProtocolPolicy": "allow-all",
+    "MinTTL": 0
+  },
+
+  "CustomErrorResponses": {
+      "Quantity": 1,
+      "Items": [
+          {
+              "ErrorCode": 404,
+              "ResponsePagePath": "/index.html",
+              "ResponseCode": "404",
+              "ErrorCachingMinTTL": 0
+          }
+      ]
+  },
+
+  "ViewerCertificate": {
+	"CloudFrontDefaultCertificate": false,
+        "IAMCertificateId": "string",
+	"SSLSupportMethod": "sni-only",
+        "MinimumProtocolVersion": "TLSv1"
+	},
+
+  "CacheBehaviors": {
+    "Quantity": 0
+  },
+  "Comment": "",
+  "Logging": {
+    "Enabled": false,
+    "IncludeCookies": true,
+    "Bucket": "",
+    "Prefix": ""
+  },
+  "PriceClass": "PriceClass_All",
+  "Enabled": true
+}

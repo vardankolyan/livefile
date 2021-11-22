@@ -1,0 +1,42 @@
+{
+    	"Comment": "Adding A records for CF and LB",
+	"Changes": [{
+		"Action": "CREATE",
+	
+	"ResourceRecordSet": 
+        {
+            "Name": "vardan.acadevopscourse.xyz.",
+            "Type": "A",
+            "AliasTarget": {
+                "HostedZoneId": "Z2FDTNDATAQYW2",
+                "DNSName": "cloudfront_name",
+                "EvaluateTargetHealth": false
+            }
+        },
+	
+        "Action": "CREATE",
+	"ResourceRecordSet":
+        {
+            "Name": "api.vardan.acadevopscourse.xyz.",
+            "Type": "A",
+            "AliasTarget": {
+                "HostedZoneId": "Z3AADJGX6KTTL2",
+                "DNSName": "loadbalancer_name",
+                "EvaluateTargetHealth": true
+            }
+        },
+        "Action": "CREATE",
+	"ResourceRecordSet":
+	{
+            "Name": "www.vardan.acadevopscourse.xyz.",
+            "Type": "CNAME",
+            "TTL": 300,
+            "ResourceRecords": [
+                {
+                    "Value": "vardan.acadevopscourse.xyz"
+                }
+            ]
+        }
+	
+	}]
+}
