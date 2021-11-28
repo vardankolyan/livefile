@@ -1,1 +1,4 @@
 *.out.*
+*.hcl
+*.tfstate
+*aws_v3.67.0_x5
