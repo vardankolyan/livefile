@@ -5,6 +5,6 @@ resource "aws_volume_attachment" "ebs_att" {
 }
 
 resource "aws_ebs_volume" "vol2" {
-  availability_zone = "us-east-2b"
+  availability_zone = "${var.aws_region_subnet}"
   size              = 1
 }
